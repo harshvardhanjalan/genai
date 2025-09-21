@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtisansAI - Empowering Local Artisans</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .hero-bg { background-color: #FFF8F0; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .section-title { @apply text-3xl md:text-4xl font-serif font-bold text-center mb-12 text-gray-800; }
+        .feature-card, .solution-card, .tech-card, .info-card { @apply bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow duration-300 flex flex-col; }
+
+        /* --- Integrated Profile Builder Styles --- */
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; cursor: pointer; }
+        .file-input-button { display: block; width: 100%; padding: 8px 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; text-align: left; background-color: white; color: #6b7280; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #6366f1; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .thumb-container { position: relative; display: inline-block; cursor: pointer; }
+        .thumb-container .remove-btn { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .thumb-container:hover .remove-btn { opacity: 1; }
+
+        /* --- Chatbot-specific styles --- */
+        .chatbot-container { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 100%; max-width: 400px; height: 80%; max-height: 600px; background-color: white; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); display: none; flex-direction: column; overflow: hidden; z-index: 1000; }
+        .chatbot-container.active { display: flex; }
+        .chat-header { background-color: #4CAF50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+        .chat-header h3 { font-weight: 600; font-size: 1.1rem; }
+        .chat-header button { background: none; border: none; color: white; cursor: pointer; }
+        .chat-log { flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+        .message-bubble { max-width: 85%; padding: 0.75rem 1rem; border-radius: 1.25rem; word-wrap: break-word; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .user-message { align-self: flex-end; background-color: #e0f7fa; color: #333; }
+        .bot-message { align-self: flex-start; background-color: #f1f1f1; color: #333; }
+        .chat-input-area { display: flex; padding: 1rem; border-top: 1px solid #ddd; gap: 0.5rem; }
+        #user-input { flex-grow: 1; padding: 0.75rem 1.25rem; border: 1px solid #ddd; border-radius: 9999px; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        #user-input:focus { border-color: #4CAF50; }
+        #send-button { padding: 0.75rem 1.5rem; background-color: #4CAF50; color: white; border: none; border-radius: 9999px; cursor: pointer; font-weight: 600; transition: background-color 0.2s, transform 0.2s; }
+        #send-button:hover { background-color: #43a047; transform: translateY(-2px); }
+
+        @media (max-width: 640px) {
+            .chatbot-container { bottom: 0; right: 0; border-radius: 0; height: 100vh; max-width: none; max-height: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-200">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="#" class="text-2xl font-bold font-serif text-gray-800">ArtisansAI</a>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="#idea" class="text-gray-600 hover:text-orange-600 transition">Our Idea</a>
+                    <a href="#features" class="text-gray-600 hover:text-orange-600 transition">Features</a>
+                    <a href="#profile-builder" class="text-gray-600 hover:text-orange-600 transition">Profile Builder</a>
+                    <a href="#pricing" class="text-gray-600 hover:text-orange-600 transition">Pricing</a>
+                    <a href="#tech-stack" class="text-gray-600 hover:text-orange-600 transition">Technology</a>
+                </nav>
+                <button id="mobile-menu-button" class="md:hidden"><i data-lucide="menu" class="h-6 w-6"></i></button>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+             <a href="#idea" class="block py-2 text-gray-600 hover:text-orange-600 transition">Our Idea</a>
+            <a href="#features" class="block py-2 text-gray-600 hover:text-orange-600 transition">Features</a>
+            <a href="#profile-builder" class="block py-2 text-gray-600 hover:text-orange-600 transition">Profile Builder</a>
+            <a href="#pricing" class="block py-2 text-gray-600 hover:text-orange-600 transition">Pricing</a>
+            <a href="#tech-stack" class="block py-2 text-gray-600 hover:text-orange-600 transition">Technology</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-bg py-20 md:py-32">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-6xl font-serif font-bold text-gray-900 leading-tight">Empowering Local Artisans with the Power of AI</h1>
+                <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">We provide a generative AI platform to help traditional artists thrive in the digital world, preserving culture and creating sustainable livelihoods.</p>
+            </div>
+        </section>
+
+        <section id="idea" class="py-20">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title">Our Vision</h2>
+                <div class="max-w-4xl mx-auto text-center">
+                    <p class="text-lg text-gray-600 leading-relaxed">Local artisans are the custodians of our cultural heritage, yet they often struggle to connect with a wider audience, manage their business, and tell their unique stories. ArtisansAI is a specialized platform, not just another marketplace. We are building an ecosystem that leverages Generative AI to provide artisans with digital tools for storytelling, business management, and market access, ensuring their craft gets the recognition and value it deserves.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="features" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title">Key Features</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+                    <div class="feature-card">
+                        <div><i data-lucide="gift" class="w-10 h-10 text-green-600 mb-4"></i><h3 class="text-xl font-bold text-gray-800 mb-2">AI Gift Recommendations</h3><p class="text-gray-600">Looking for the perfect gift? Describe the occasion and recipient, and our AI will suggest unique handcrafted items.</p></div>
+                        <div class="mt-auto pt-4 border-t border-gray-200">
+                            <label for="giftOccasion" class="text-sm font-medium text-gray-700">Who and what is the gift for?</label>
+                            <input type="text" id="giftOccasion" placeholder="e.g., Housewarming for a nature lover" class="w-full p-2 mt-1 border rounded-md bg-gray-50 text-sm">
+                            <button id="generateGiftBtn" class="w-full mt-2 bg-teal-600 text-white p-2 rounded-lg font-semibold hover:bg-teal-700 transition-colors text-sm flex items-center justify-center">✨ Find Gift Ideas<div id="giftSpinner" class="hidden ml-2 w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin"></div></button>
+                            <div id="giftResult" class="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-md text-sm text-gray-700 hidden"></div>
+                        </div>
+                    </div>
+                    <div class="feature-card flex flex-col items-center">
+                        <i data-lucide="message-square-question" class="w-10 h-10 text-blue-600 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 text-center">Customer Support Chatbot</h3>
+                        <p class="text-gray-600 text-center flex-grow">Provides product info, artisan stories, multilingual support, and post-purchase assistance for refunds and inquiries.</p>
+                        <button id="open-chatbot-button" class="mt-4 bg-orange-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-orange-700 transition-colors">Start Chat</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="profile-builder" class="py-20 bg-gray-100">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title">Artisan AI Profile Builder</h2>
+                <p class="text-center text-gray-600 -mt-8 mb-12 max-w-2xl mx-auto">A powerful tool for our artisans. Upload product photos and a few details, and our AI will generate a complete, copyright-friendly profile with descriptions and captions based on your work.</p>
+                <div class="card bg-white max-w-5xl mx-auto rounded-2xl shadow-xl overflow-hidden p-8 flex flex-col md:flex-row gap-8 w-full">
+                    <div class="col md:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-900">Enter Your Details</h3>
+                        <div id="form-content" class="mt-6">
+                            <label for="builder-name" class="block mt-4 font-semibold text-sm">Name</label><input id="builder-name" type="text" placeholder="Full name or shop name" class="w-full p-2.5 mt-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors" />
+                            <label for="builder-craft" class="block mt-4 font-semibold text-sm">Craft / Art style</label><input id="builder-craft" type="text" placeholder="e.g. Pottery, Block printing" class="w-full p-2.5 mt-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors" />
+                            <label for="builder-bio" class="block mt-4 font-semibold text-sm">Optional: Bio</label><textarea id="builder-bio" rows="3" placeholder="Short background about the artisan" class="w-full p-2.5 mt-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"></textarea>
+                            <label for="builder-history" class="block mt-4 font-semibold text-sm">Optional: History / notes</label><textarea id="builder-history" rows="3" placeholder="Family history, techniques..." class="w-full p-2.5 mt-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"></textarea>
+                            <label for="builder-photos" class="block mt-4 font-semibold text-sm">Product photos (up to 6)</label><div class="file-input-wrapper"><button class="file-input-button text-gray-500">Choose Files...</button><input id="builder-photos" type="file" accept="image/*" multiple /></div>
+                            <div id="thumbs-container" class="flex gap-2 flex-wrap mt-2 min-h-[80px]"></div>
+                            <label for="builder-license" class="block mt-4 font-semibold text-sm">License</label><select id="builder-license" class="w-full p-2.5 mt-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"><option value="CC0">CC0 — Public Domain</option><option value="CC-BY">CC BY — Attribution required</option></select>
+                            <div class="mt-4 flex items-center"><input id="builder-consent" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" /><label for="builder-consent" class="ml-2 text-sm font-medium text-gray-700">I confirm I have rights to these photos and agree to generate AI text</label></div>
+                            <div class="mt-6 flex gap-4"><button id="builder-generate" class="flex items-center bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition-colors duration-200">Generate Profile<span id="builder-loader" class="loader ml-2 hidden"></span></button><button id="builder-clear" class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors duration-200">Clear</button></div>
+                            <div id="builder-status" class="mt-4 text-sm text-gray-500"></div>
+                        </div>
+                    </div>
+                    <div class="col md:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-900">Preview</h3>
+                        <div id="builder-preview" class="preview bg-gray-50 p-6 rounded-lg shadow-inner mt-4 text-gray-500">Generated profile will appear here.</div>
+                        <div class="mt-4"><button id="builder-download" class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition-colors duration-200" disabled>Download JSON</button></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="pricing" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title">Pricing & Business Model</h2>
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4 text-gray-800">Fair Price Calculator for Artisans</h3>
+                        <p class="text-gray-600 mb-6">Our transparent calculator helps you determine the final selling price for your products, ensuring you cover all costs and earn a fair profit. This is a tool for estimation.</p>
+                        <div class="bg-gray-50 p-6 rounded-lg border">
+                            <div class="mb-4">
+                                <label for="basePrice" class="block font-medium mb-1">Your Base Price (₹)</label>
+                                <input type="number" id="basePrice" placeholder="e.g., 500" class="w-full p-2 border rounded-md">
+                            </div>
+                            <div class="space-y-3 mt-6 text-sm" id="calculationResults">
+                                <div class="flex justify-between items-center"><p class="text-gray-600">Packing & Handling Charges</p><p class="font-medium">₹<span id="packingCharges">0.00</span></p></div>
+                                <div class="flex justify-between items-center"><p class="text-gray-600">Platform Fee (1%)</p><p class="font-medium">₹<span id="platformFee">0.00</span></p></div>
+                                <div class="flex justify-between items-center"><p class="text-gray-600">Subtotal</p><p class="font-medium">₹<span id="subtotal">0.00</span></p></div>
+                                <div class="flex justify-between items-center"><p class="text-gray-600">GST (12%)</p><p class="font-medium">₹<span id="gst">0.00</span></p></div>
+                                <div class="border-t my-2"></div>
+                                <div class="flex justify-between items-center text-lg"><p class="font-bold text-gray-800">Price before Shipping</p><p class="font-bold text-gray-800">₹<span id="priceBeforeShipping">0.00</span></p></div>
+                                <div class="border-t my-2"></div>
+                                <div class="flex justify-between items-center text-xl"><p class="font-bold text-green-700">Recommended Selling Price<br><small class="font-normal text-xs">(Includes profit & shipping)</small></p><p class="font-bold text-green-700">₹<span id="finalPrice">0.00</span></p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4 text-gray-800">Our Monetization Strategy</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-green-500 mr-3 mt-1 shrink-0"></i><div><h4 class="font-semibold">Platform Fee</h4><p class="text-gray-600 text-sm">A small, transparent commission (e.g., 1-3%) on each sale, only when an artisan makes money.</p></div></li>
+                            <li class="flex items-start"><i data-lucide="check-circle" class="w-6 h-6 text-green-500 mr-3 mt-1 shrink-0"></i><div><h4 class="font-semibold">Value-Added Services (Future)</h4><p class="text-gray-600 text-sm">Optional premium services like professional photoshoots, advanced analytics, or featured listings.</p></div></li>
+                            <li class="flex items-start"><i data-lucide="x-circle" class="w-6 h-6 text-red-500 mr-3 mt-1 shrink-0"></i><div><h4 class="font-semibold">No Fake Marketing Pricing</h4><p class="text-gray-600 text-sm">We don't believe in hiking prices to offer fake discounts. Pricing is transparent and set by the artisan with our guidance.</p></div></li>
+                            <li class="flex items-start"><i data-lucide="x-circle" class="w-6 h-6 text-red-500 mr-3 mt-1 shrink-0"></i><div><h4 class="font-semibold">No Cash on Delivery</h4><p class="text-gray-600 text-sm">To protect our artisans from fraud and return-related losses, we only support pre-paid orders.</p></div></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tech-stack" class="py-20">
+            <div class="container mx-auto px-6">
+                <h2 class="section-title">Our Technology Stack</h2>
+                <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div class="tech-card text-center"><img src="https://placehold.co/80x80/FEF2E2/EA580C?text=HTML5" class="mx-auto mb-4 rounded-full"><h4 class="font-bold text-lg">HTML5</h4><p class="text-sm text-gray-500">Markup Language</p></div>
+                    <div class="tech-card text-center"><img src="https://placehold.co/80x80/E0F2FE/0891B2?text=Tailwind" class="mx-auto mb-4 rounded-full"><h4 class="font-bold text-lg">Tailwind CSS</h4><p class="text-sm text-gray-500">CSS Framework</p></div>
+                    <div class="tech-card text-center"><img src="https://placehold.co/80x80/F3E8FF/7E22CE?text=JS" class="mx-auto mb-4 rounded-full"><h4 class="font-bold text-lg">JavaScript</h4><p class="text-sm text-gray-500">Client-side Scripting</p></div>
+                    <div class="tech-card text-center"><img src="https://placehold.co/80x80/DCFCE7/16A34A?text=Gemini" class="mx-auto mb-4 rounded-full"><h4 class="font-bold text-lg">Google Gemini</h4><p class="text-sm text-gray-500">Generative AI Models</p></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div><h3 class="text-xl font-serif font-bold mb-4">ArtisansAI</h3><p class="text-gray-400">Preserving culture, empowering creators.</p></div>
+                <div><h4 class="font-semibold mb-4">Quick Links</h4><ul class="space-y-2 text-gray-400"><li><a href="#idea" class="hover:text-white">About Us</a></li><li><a href="#features" class="hover:text-white">Features</a></li><li><a href="#profile-builder" class="hover:text-white">Profile Builder</a></li></ul></div>
+                <div><h4 class="font-semibold mb-4">Connect With Us</h4><div class="flex space-x-4"><a href="#" class="text-gray-400 hover:text-white"><i data-lucide="twitter"></i></a><a href="#" class="text-gray-400 hover:text-white"><i data-lucide="instagram"></i></a><a href="#" class="text-gray-400 hover:text-white"><i data-lucide="facebook"></i></a></div></div>
+            </div>
+            <div class="mt-12 border-t border-gray-700 pt-8 text-center text-gray-500 text-sm"><p>&copy; 2025 ArtisansAI. All Rights Reserved.</p></div>
+        </div>
+    </footer>
+
+    <div id="chatbot-container" class="chatbot-container">
+        <div class="chat-header"><h3>ArtisanBot</h3><button id="close-chatbot-button"><i data-lucide="x" class="w-6 h-6"></i></button></div>
+        <div class="chat-log" id="chat-log"></div>
+        <div class="chat-input-area"><input type="text" id="user-input" placeholder="Type your message..."><button id="send-button">Send</button></div>
+    </div>
+
+    <div id="message-box" class="fixed inset-0 bg-gray-800 bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 shadow-2xl max-w-sm w-full">
+            <h4 id="message-title" class="text-lg font-bold text-gray-800"></h4>
+            <p id="message-text" class="mt-2 text-sm text-gray-600"></p>
+            <div class="mt-4 flex justify-end"><button id="message-ok-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">OK</button></div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- GLOBAL API KEY AND URL ---
+        const API_KEY = "AIzaSyA3vBfZqXXGkeYR7ShiHL4tA_XCbz4bNX0";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+        
+        // --- Mobile Menu Toggle ---
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // --- Cost Calculator Logic (UPDATED) ---
+        const basePriceInput = document.getElementById('basePrice');
+        if (basePriceInput) {
+            basePriceInput.addEventListener('input', updateCosts);
+            updateCosts();
+        }
+        function updateCosts() {
+            const basePrice = parseFloat(basePriceInput.value) || 0;
+            // UPDATED VALUES:
+            const PACKING_FLAT_RATE = 100.00; // Changed to 100
+            const PLATFORM_FEE_PERCENT = 0.01; // Changed to 1%
+            const GST_PERCENT = 0.12;
+            const PROFIT_MARGIN_PERCENT = 0.20;
+            const AVG_SHIPPING_COST = 80.00;
+            
+            const packingCharges = basePrice > 0 ? PACKING_FLAT_RATE : 0;
+            const platformFee = (basePrice + packingCharges) * PLATFORM_FEE_PERCENT;
+            const subtotal = basePrice + packingCharges + platformFee;
+            const gst = subtotal * GST_PERCENT;
+            const priceBeforeShipping = subtotal + gst;
+            const profit = priceBeforeShipping * PROFIT_MARGIN_PERCENT;
+            const finalPrice = priceBeforeShipping + profit + AVG_SHIPPING_COST;
+            document.getElementById('packingCharges').textContent = packingCharges.toFixed(2);
+            document.getElementById('platformFee').textContent = platformFee.toFixed(2);
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('gst').textContent = gst.toFixed(2);
+            document.getElementById('priceBeforeShipping').textContent = priceBeforeShipping.toFixed(2);
+            document.getElementById('finalPrice').textContent = finalPrice.toFixed(2);
+        }
+
+        // --- Simple Feature Cards Logic ---
+        const generateGiftBtn = document.getElementById('generateGiftBtn');
+        const giftOccasion = document.getElementById('giftOccasion');
+        const giftResult = document.getElementById('giftResult');
+        const giftSpinner = document.getElementById('giftSpinner');
+        async function callSimpleFeatureAPI(prompt, resultElement, spinnerElement, buttonElement) {
+            spinnerElement.classList.remove('hidden');
+            buttonElement.disabled = true;
+            resultElement.classList.add('hidden');
+            resultElement.innerHTML = '';
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    resultElement.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    resultElement.classList.remove('hidden');
+                } else { throw new Error("No text in response."); }
+            } catch (error) {
+                console.error("Simple Feature API Error:", error);
+                resultElement.textContent = "Error getting response.";
+                resultElement.classList.remove('hidden');
+            } finally {
+                spinnerElement.classList.add('hidden');
+                buttonElement.disabled = false;
+            }
+        }
+        
+        generateGiftBtn.addEventListener('click', () => {
+            if (giftOccasion.value.trim() === "") return;
+            const prompt = `You are an AI gift recommendation expert for ArtisansAI, an online marketplace for Indian handicrafts. A customer is looking for a gift. Their request is: "${giftOccasion.value}". Suggest 3 specific types of handcrafted items that would be a great fit. For each suggestion, briefly explain why it's a good choice. Format with bolded titles.`;
+            callSimpleFeatureAPI(prompt, giftResult, giftSpinner, generateGiftBtn);
+        });
+
+        // --- INTEGRATED PROFILE BUILDER LOGIC ---
+        const photosInput = document.getElementById('builder-photos');
+        const thumbsContainer = document.getElementById('thumbs-container');
+        const generateBtn = document.getElementById('builder-generate');
+        const clearBtn = document.getElementById('builder-clear');
+        const preview = document.getElementById('builder-preview');
+        const statusEl = document.getElementById('builder-status');
+        const downloadBtn = document.getElementById('builder-download');
+        const loader = document.getElementById('builder-loader');
+        const nameInput = document.getElementById('builder-name');
+        const craftInput = document.getElementById('builder-craft');
+        const bioInput = document.getElementById('builder-bio');
+        const historyInput = document.getElementById('builder-history');
+        const licenseSelect = document.getElementById('builder-license');
+        const consentCheckbox = document.getElementById('builder-consent');
+        const messageBox = document.getElementById('message-box');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const messageOkBtn = document.getElementById('message-ok-btn');
+        let selectedFiles = [];
+        let lastGenerated = null;
+        function showMessageBox(title, message) {
+            messageTitle.textContent = title;
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+        messageOkBtn.addEventListener('click', () => messageBox.classList.add('hidden'));
+        photosInput.addEventListener('change', e => {
+            selectedFiles = Array.from(e.target.files).slice(0, 6);
+            renderThumbnails();
+        });
+        function renderThumbnails() {
+            thumbsContainer.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                const container = document.createElement('div');
+                container.className = 'thumb-container';
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'w-20 h-20 rounded-lg object-cover border border-gray-300';
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn focus:outline-none';
+                removeBtn.textContent = 'x';
+                removeBtn.onclick = () => {
+                    selectedFiles.splice(index, 1);
+                    photosInput.value = null;
+                    renderThumbnails();
+                };
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                thumbsContainer.appendChild(container);
+            });
+        }
+        clearBtn.addEventListener('click', () => {
+            nameInput.value = ''; craftInput.value = ''; bioInput.value = ''; historyInput.value = '';
+            licenseSelect.value = 'CC0'; consentCheckbox.checked = false; photosInput.value = '';
+            selectedFiles = []; thumbsContainer.innerHTML = '';
+            preview.innerHTML = '<span class="text-gray-500">Generated profile will appear here.</span>';
+            statusEl.textContent = ''; downloadBtn.disabled = true; lastGenerated = null;
+        });
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({ mimeType: file.type, data: reader.result.split(',')[1] });
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+        generateBtn.addEventListener('click', async () => {
+            if (!nameInput.value.trim() || !craftInput.value.trim()) { showMessageBox('Validation Error', 'Please provide a name and craft.'); return; }
+            if (!consentCheckbox.checked) { showMessageBox('Consent Required', 'Please confirm you have rights to the photos.'); return; }
+            if (selectedFiles.length === 0) { showMessageBox('Photo Required', 'Please upload at least one product photo.'); return; }
+            statusEl.textContent = 'Generating profile...';
+            generateBtn.disabled = true;
+            loader.classList.remove('hidden');
+            try {
+                const base64Images = await Promise.all(selectedFiles.map(fileToBase64));
+                const promptText = `Generate a professional and engaging profile for an artisan. Use the provided information and analyze the product images to create the text. The response must be a valid JSON object with 'about', 'history', and 'caption' as keys. Do not output markdown or any other text. Artisan Name: ${nameInput.value.trim()} Craft/Style: ${craftInput.value.trim()} Bio: ${bioInput.value.trim()} History/Notes: ${historyInput.value.trim()} Analyze the images to incorporate details about materials, techniques, and style. The 'about' and 'history' sections should be a single paragraph each. The 'caption' should be a short phrase.`;
+                const payload = { contents: [{ parts: [{ text: promptText }, ...base64Images.map(img => ({ inlineData: img }))] }], generationConfig: { responseMimeType: 'application/json' } };
+                const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                const result = await response.json();
+                const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!generatedText) throw new Error('Invalid API response format.');
+                const generatedData = JSON.parse(generatedText);
+                lastGenerated = { name: nameInput.value.trim(), craft: craftInput.value.trim(), bio: bioInput.value.trim(), history: generatedData.history, caption: generatedData.caption, about: generatedData.about, license: licenseSelect.value };
+                renderBuilderPreview(lastGenerated);
+                downloadBtn.disabled = false;
+                statusEl.textContent = 'Profile successfully generated!';
+            } catch (err) {
+                console.error(err);
+                showMessageBox('Generation Failed', `An error occurred: ${err.message}`);
+                statusEl.textContent = 'Error: Generation failed.';
+            } finally {
+                generateBtn.disabled = false;
+                loader.classList.add('hidden');
+            }
+        });
+        downloadBtn.addEventListener('click', () => {
+            if (!lastGenerated) return;
+            const blob = new Blob([JSON.stringify(lastGenerated, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${lastGenerated.name.replace(/\s+/g, '_')}_profile.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        function renderBuilderPreview(d) {
+            preview.innerHTML = '';
+            const header = `<div class="flex items-center gap-4 mb-4"><div class="w-16 h-16 rounded-xl bg-gray-200"></div><div><h3 class="font-bold text-xl text-gray-800">${d.name}</h3><p class="text-sm text-gray-500">${d.craft}</p></div></div>`;
+            const about = d.about ? `<div class="mb-4"><strong class="block text-gray-800 font-semibold mb-1">About</strong><p class="text-gray-600 leading-relaxed">${d.about}</p></div>` : '';
+            const history = d.history ? `<div class="mb-4"><strong class="block text-gray-800 font-semibold mb-1">History</strong><p class="text-gray-600 leading-relaxed">${d.history}</p></div>` : '';
+            const caption = d.caption ? `<div class="mb-4"><strong class="block text-gray-800 font-semibold mb-1">Caption</strong><p class="text-gray-600 leading-relaxed">${d.caption}</p></div>` : '';
+            const license = `<p class="text-sm text-gray-500 mt-4">License: <strong class="text-gray-700">${d.license}</strong></p>`;
+            preview.innerHTML = header + about + history + caption + license;
+        }
+
+        // --- Chatbot Logic ---
+        const chatLog = document.getElementById('chat-log');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const openChatbotButton = document.getElementById('open-chatbot-button');
+        const closeChatbotButton = document.getElementById('close-chatbot-button');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const simulatedOrders = { "ORD-23456": {"item": "Hand-carved Wooden Spoon", "status": "Shipped", "tracking_id": "TRK7890123"}, "ORD-12345": {"item": "Block-Printed Cushion Cover", "status": "Out for Delivery", "tracking_id": "TRK4567890"} };
+        const systemInstructionChatbot = `You are ArtisanBot, a friendly AI assistant for an online marketplace for local artisans. Reference the following order data: ${JSON.stringify(simulatedOrders)}. Be polite, use emojis, and if asked about tracking, use the order data. For general questions, provide helpful, conversational answers.`;
+        let chatHistory = [];
+        function addChatMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message-bubble', sender === 'user' ? 'user-message' : 'bot-message');
+            messageDiv.textContent = message;
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+        async function sendChatMessage() {
+            const userMessage = userInput.value.trim();
+            if (userMessage === '') return;
+            addChatMessage('user', userMessage);
+            userInput.value = '';
+            sendButton.disabled = true;
+            sendButton.textContent = '...';
+            chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+            const payload = { contents: chatHistory, systemInstruction: { parts: [{ text: systemInstructionChatbot }] } };
+            try {
+                const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error("API Error");
+                const result = await response.json();
+                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I had trouble responding.";
+                addChatMessage('bot', responseText);
+                chatHistory.push({ role: 'model', parts: [{ text: responseText }] });
+            } catch (error) {
+                console.error("Chatbot API error:", error);
+                addChatMessage('bot', "I'm sorry, I couldn't get a response. Please try again.");
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send';
+            }
+        }
+        openChatbotButton.addEventListener('click', () => {
+            chatbotContainer.classList.add('active');
+            if (chatLog.children.length === 0) {
+               addChatMessage('bot', "Hello! I'm ArtisanBot. How can I help you today? 😊");
+            }
+            userInput.focus();
+        });
+        closeChatbotButton.addEventListener('click', () => { chatbotContainer.classList.remove('active'); });
+        sendButton.addEventListener('click', sendChatMessage);
+        userInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        });
+    </script>
+</body>
+</html>
